@@ -1,0 +1,64 @@
+#!/usr/bin/env perl
+
+# $Id$
+
+use 5.10.0;
+use warnings;
+use integer;
+use autodie qw(:all);
+
+BEGIN {
+    our ($VERSION) = '$Revision$' =~ m{\$Revision: \s+ (\S+)}x; ## no critic
+}
+
+# step 1: fetch data from web page
+use LWP::UserAgent;
+use HTML::TreeBuilder;
+
+my $url = 'http://www.logique.jussieu.fr/modnet/Meetings%20and%20events/';
+my $var = "$ENV{HOME}/var/modnet";
+my $old = "$var/old";
+my $new = "$var/new";
+
+my $m=new LWP::UserAgent;
+my $r=$m->get($url);
+die 'Failed to fetch: ' . $r->status_line unless $r->is_success;
+my $t=HTML::TreeBuilder->new_from_content($r->decoded_content);
+my $e = $t->find_by_attribute("class" => "contenuDiv");
+for my $i ( $e->find("li") ) {
+    my $l = $i->as_text;
+    my $n;
+    my $h;
+    my $a;
+    if ($a = $i->find("a") and $n = $a->as_text) {
+        $h = $a->attr("href");
+        my $j = index($l, $n);
+        if ( $j >= 0 ) {
+            substr($l, $j, length($n), '');
+        } else {
+            warn "'$n' is not a substring of '$l'";
+        }
+        $n =~ s/^ *//;
+        $l =~ s/^, *//;
+    } else {
+        $n = $1 if $l =~ s/^([^,]*), *//;
+        $n =~ s/^\[MODNET\]//
+    }
+    my $p = $1 if $l =~ s/^(.*), *//;
+    $l =~ s/\. *$//;
+    push @m, {name => $n, place => $p, url => $h, time => $l}
+}
+
+use YAML::Any qw(Dump);
+use File::Copy qw(move);
+use Text::Diff;
+open my $out, '>', $new;
+print $out Dump(@m);
+undef $out;
+if ( -r $old ) {
+    print diff($old, $new, { STYLE => 'Unified'});
+} else {
+    print Dump(@m);
+}
+move($new, $old);
+
