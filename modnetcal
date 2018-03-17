@@ -40,7 +40,7 @@ for my $i ( $e->find("li") ) {
             warn "'$n' is not a substring of '$l'";
         }
         $n =~ s/^ *//;
-        $l =~ s/^, *//;
+        $l =~ s/^[^,]*, *//;
     } else {
         $n = $1 if $l =~ s/^([^,]*), *//;
         $n =~ s/^\[MODNET\]//
