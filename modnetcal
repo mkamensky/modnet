@@ -33,6 +33,7 @@ for my $i ( $e->find("li") ) {
     my $a;
     if ($a = $i->find("a") and $n = $a->as_text) {
         $h = $a->attr("href");
+        chomp($h);
         my $j = index($l, $n);
         if ( $j >= 0 ) {
             substr($l, 0, $j + length($n), '');
@@ -79,6 +80,11 @@ if ($Opts{'csv'}) {
     our $csv = new Text::CSV;
 }
 
+sub date_str {
+    my $dt = shift;
+    sprintf("%04d%02d%02d", $dt->year, $dt->month, $dt->day)
+}
+
 for my $m ( @m ) {
     my $ti;
     if ( $m->{'time'} =~ /(.*?) *- *(.*) (20[0-9][0-9])/ ) {
@@ -102,7 +108,7 @@ for my $m ( @m ) {
     $_->truncate(to => 'day') foreach @dt;
     if ($Opts{'ical'}) {
         ($vev) = grep {
-            ($_->summary eq $m->{'name'}) and ($_->start eq $dt[0])
+            ($_->summary eq $m->{'name'}) and ($_->start eq date_str($dt[0]))
         } @old;
         $dtend = $dt[1]->clone;
         $dtend->add(days => 1);
@@ -112,16 +118,17 @@ for my $m ( @m ) {
             location => $m->{'place'},
             url => $m->{'url'},
             status => 'CONFIRMED',
-            dtstart => sprintf("%04d%02d%02d", 
-                $dt[0]->year, $dt[0]->month, $dt[0]->day),
-            dtend => sprintf("%04d%02d%02d", 
-                $dtend->year, $dtend->month, $dtend->day),
+            dtstart => date_str($dt[0]),
+            dtend => date_str($dtend),
         );
         #$vev->start($dt[0]);
         #$vev->end($dt[1]);
         #$vev->all_day(1);
         $vev->property('dtstart')->[0]->parameters->{'VALUE'} = 'DATE';
         $vev->property('dtend')->[0]->parameters->{'VALUE'} = 'DATE';
+        $vev->add_properties(
+            dtstamp => DateTime::Format::ICal->format_datetime(DateTime->now),
+        ) unless $vev->property('dtstamp');
         $ical->add_entry($vev);
     }
     if ($Opts{'csv'}) {
