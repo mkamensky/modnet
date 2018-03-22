@@ -3,6 +3,7 @@
 # $Id$
 
 use 5.10.0;
+use utf8;
 use warnings;
 use integer;
 use autodie qw(:all);
@@ -85,7 +86,7 @@ sub date_str {
     sprintf("%04d%02d%02d", $dt->year, $dt->month, $dt->day)
 }
 
-our %MN = {
+our %MN = (
     janvier => 'January', 
     février => 'February', 
     mars => 'March', 
@@ -98,9 +99,10 @@ our %MN = {
     octobre => 'October', 
     novembre => 'November', 
     décembre => 'December', 
-};
+);
 
-our $MN = join(keys %MN, '|');
+
+our $MN = join('|', keys %MN);
 $MN = qr/$MN/;
 
 for my $m ( @m ) {
