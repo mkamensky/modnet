@@ -104,17 +104,24 @@ for my $m ( @m ) {
         ($vev) = grep {
             ($_->summary eq $m->{'name'}) and ($_->start eq $dt[0])
         } @old;
+        $dtend = $dt[1]->clone;
+        $dtend->add(days => 1);
         $vev //= new Data::ICal::Entry::Event;
         $vev->add_properties(
             summary => $m->{'name'},
             location => $m->{'place'},
             url => $m->{'url'},
             status => 'CONFIRMED',
+            dtstart => sprintf("%04d%02d%02d", 
+                $dt[0]->year, $dt[0]->month, $dt[0]->day),
+            dtend => sprintf("%04d%02d%02d", 
+                $dtend->year, $dtend->month, $dtend->day),
         );
-        $vev->start($dt[0]);
-        $vev->end($dt[1]);
-        $vev->all_day(1);
+        #$vev->start($dt[0]);
+        #$vev->end($dt[1]);
+        #$vev->all_day(1);
         $vev->property('dtstart')->[0]->parameters->{'VALUE'} = 'DATE';
+        $vev->property('dtend')->[0]->parameters->{'VALUE'} = 'DATE';
         $ical->add_entry($vev);
     }
     if ($Opts{'csv'}) {
