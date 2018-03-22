@@ -85,6 +85,24 @@ sub date_str {
     sprintf("%04d%02d%02d", $dt->year, $dt->month, $dt->day)
 }
 
+our %MN = {
+    janvier => 'January', 
+    février => 'February', 
+    mars => 'March', 
+    avril => 'April', 
+    mai => 'May', 
+    juin => 'June', 
+    juillet => 'July', 
+    aout => 'August', 
+    septembre => 'September', 
+    octobre => 'October', 
+    novembre => 'November', 
+    décembre => 'December', 
+};
+
+our $MN = join(keys %MN, '|');
+$MN = qr/$MN/;
+
 for my $m ( @m ) {
     my $ti;
     if ( $m->{'time'} =~ /(.*?) *- *(.*) (20[0-9][0-9])/ ) {
@@ -103,6 +121,7 @@ for my $m ( @m ) {
     } else {
         $ti = "$m->{'time'} to $m->{'time'}";
     }
+    $ti =~ s/\b($MN)\b/$MN{$1}/ge;
     my @dt = $parse->parse_datetime_duration($ti);
     #$dt[1] += new DateTime::Duration(days => 1) if $#dt;
     $_->truncate(to => 'day') foreach @dt;
